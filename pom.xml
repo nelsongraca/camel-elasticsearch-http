@@ -19,6 +19,7 @@ language governing permissions and limitations under the License. -->
     <version>2.17.0</version>
   </parent>
 
+  <groupId>com.sarwarbhuiyan</groupId>
   <artifactId>camel-elasticsearch-http</artifactId>
   <packaging>bundle</packaging>
   <name>Camel :: ElasticSearch HTTP</name>
@@ -26,7 +27,7 @@ language governing permissions and limitations under the License. -->
   <description>Camel Elasticsearch support using HTTP</description>
 
   <properties>
-    <camel.osgi.export.pkg>org.apache.camel.component.elasticsearch.http.*;${camel.osgi.version}</camel.osgi.export.pkg>
+    <camel.osgi.export.pkg>com.sarwarbhuiyan.camel.component.elasticsearch.http.*;${camel.osgi.version}</camel.osgi.export.pkg>
     <camel.osgi.export.service>org.apache.camel.spi.ComponentResolver;component=eshttp</camel.osgi.export.service>
     <maven-bundle-version>${maven-bundle-plugin-version}</maven-bundle-version>
     <!-- problems by upgrading to maven-bundle-plugin 2.4.0 -->

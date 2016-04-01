@@ -1,4 +1,4 @@
-package org.apache.camel.component.elasticsearch.http;
+package com.sarwarbhuiyan.camel.component.elasticsearch.http;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
