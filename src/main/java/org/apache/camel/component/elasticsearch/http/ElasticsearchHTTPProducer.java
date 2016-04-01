@@ -1,0 +1,156 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.camel.component.elasticsearch.http;
+
+import org.apache.camel.Exchange;
+import org.apache.camel.Message;
+import org.apache.camel.impl.DefaultProducer;
+
+/**
+ * Represents an Elasticsearch producer.
+ */
+public class ElasticsearchHTTPProducer extends DefaultProducer {
+
+	public ElasticsearchHTTPProducer(ElasticsearchHTTPEndpoint endpoint) {
+		super(endpoint);
+	}
+
+	@Override
+	public ElasticsearchHTTPEndpoint getEndpoint() {
+		return (ElasticsearchHTTPEndpoint) super.getEndpoint();
+	}
+
+	private String resolveOperation(Exchange exchange) {
+		// 1. Operation can be driven by either (in order of preference):
+		// a. If the body is an ActionRequest the operation is set by the type
+		// of request.
+		// b. If the body is not an ActionRequest, the operation is set by the
+		// header if it exists.
+		// c. If neither the operation can not be derived from the body or
+		// header, the configuration is used.
+		// In the event we can't discover the operation from a, b or c we throw
+		// an error.
+		Object request = exchange.getIn().getBody();
+		
+
+		String operationConfig = exchange.getIn().getHeader(
+				ElasticsearchConstants.PARAM_OPERATION, String.class);
+		if (operationConfig == null) {
+			operationConfig = getEndpoint().getConfig().getOperation();
+		}
+		if (operationConfig == null) {
+			throw new IllegalArgumentException(
+					ElasticsearchConstants.PARAM_OPERATION + " value '"
+							+ operationConfig + "' is not supported");
+		}
+		return operationConfig;
+	}
+
+	public void process(Exchange exchange) throws Exception {
+		// 2. Index and type will be set by:
+		// a. If the incoming body is already an action request
+		// b. If the body is not an action request we will use headers if they
+		// are set.
+		// c. If the body is not an action request and the headers aren't set we
+		// will use the configuration.
+		// No error is thrown by the component in the event none of the above
+		// conditions are met. The java es client
+		// will throw.
+
+		Message message = exchange.getIn();
+		final String operation = resolveOperation(exchange);
+
+		// Set the index/type headers on the exchange if necessary. This is used
+		// for type conversion.
+		boolean configIndexName = false;
+		String indexName = message.getHeader(
+				ElasticsearchConstants.PARAM_INDEX_NAME, String.class);
+		if (indexName == null) {
+			message.setHeader(ElasticsearchConstants.PARAM_INDEX_NAME,
+					getEndpoint().getConfig().getIndexName());
+			configIndexName = true;
+		}
+
+		boolean configIndexType = false;
+		String indexType = message.getHeader(
+				ElasticsearchConstants.PARAM_INDEX_TYPE, String.class);
+		if (indexType == null) {
+			message.setHeader(ElasticsearchConstants.PARAM_INDEX_TYPE,
+					getEndpoint().getConfig().getIndexType());
+			configIndexType = true;
+		}
+
+		boolean configConsistencyLevel = false;
+		String consistencyLevel = message.getHeader(
+				ElasticsearchConstants.PARAM_CONSISTENCY_LEVEL, String.class);
+		if (consistencyLevel == null) {
+			message.setHeader(ElasticsearchConstants.PARAM_CONSISTENCY_LEVEL,
+					getEndpoint().getConfig().getConsistencyLevel());
+			configConsistencyLevel = true;
+		}
+
+		ElasticsearchHTTPEndpoint endpoint = getEndpoint();
+		if (ElasticsearchConstants.OPERATION_INDEX.equals(operation)) {
+			message.setBody(endpoint.index(message));
+		} else if (ElasticsearchConstants.OPERATION_UPDATE.equals(operation)) {
+			message.setBody(endpoint.update(message));
+		} else if (ElasticsearchConstants.OPERATION_GET_BY_ID.equals(operation)) {
+			message.setBody(endpoint.getById(message));
+		} else if (ElasticsearchConstants.OPERATION_MULTIGET.equals(operation)) {
+			message.setBody(endpoint.multiget(message));
+		} else if (ElasticsearchConstants.OPERATION_BULK.equals(operation)) {
+			message.setBody(endpoint.bulk(message));
+		} else if (ElasticsearchConstants.OPERATION_BULK_INDEX
+				.equals(operation)) {
+			message.setBody(endpoint.bulkIndex(message));
+		} else if (ElasticsearchConstants.OPERATION_DELETE.equals(operation)) {
+			message.setBody(endpoint.delete(message));
+		} else if (ElasticsearchConstants.OPERATION_EXISTS.equals(operation)) {
+			message.setBody(endpoint.indexExists(message));
+		} else if (ElasticsearchConstants.OPERATION_SEARCH.equals(operation)) {
+			message.setBody(endpoint.search(message));
+		} else if (ElasticsearchConstants.OPERATION_MULTISEARCH
+				.equals(operation)) {
+			message.setBody(endpoint.multisearch(message));
+		} else {
+			throw new IllegalArgumentException(
+					ElasticsearchConstants.PARAM_OPERATION + " value '"
+							+ operation + "' is not supported");
+		}
+
+		// If we set params via the configuration on this exchange, remove them
+		// now. This preserves legacy behavior for this component and enables a
+		// use case where one message can be sent to multiple elasticsearch
+		// endpoints where the user is relying on the endpoint configuration
+		// (index/type) rather than header values. If we do not clear this out
+		// sending the same message (index request, for example) to multiple
+		// elasticsearch endpoints would have the effect overriding any
+		// subsequent endpoint index/type with the first endpoint index/type.
+		if (configIndexName) {
+			message.removeHeader(ElasticsearchConstants.PARAM_INDEX_NAME);
+		}
+
+		if (configIndexType) {
+			message.removeHeader(ElasticsearchConstants.PARAM_INDEX_TYPE);
+		}
+
+		if (configConsistencyLevel) {
+			message.removeHeader(ElasticsearchConstants.PARAM_CONSISTENCY_LEVEL);
+		}
+
+	}
+}
