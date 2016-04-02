@@ -8,11 +8,11 @@ import org.apache.camel.impl.UriEndpointComponent;
 
 
 /**
- * Represents the component that manages {@link ElasticsearchEndpoint}.
+ * Represents the component that manages {@link ElasticsearchHTTPEndpoint}.
  */
 public class ElasticsearchHTTPComponent extends UriEndpointComponent {
 
-        public ElasticsearchHTTPComponent() {
+    public ElasticsearchHTTPComponent() {
         super(ElasticsearchHTTPEndpoint.class);
     }
 
@@ -20,6 +20,9 @@ public class ElasticsearchHTTPComponent extends UriEndpointComponent {
         super(context, ElasticsearchHTTPEndpoint.class);
     }
 
+    /**
+     * Creates and returns the ElasticsearchHTTPEndpoint
+     */
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
         ElasticsearchHTTPConfiguration config = new ElasticsearchHTTPConfiguration();
         setProperties(config, parameters);

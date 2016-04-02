@@ -19,15 +19,6 @@ public class ElasticsearchHTTPProducer extends DefaultProducer {
 	}
 
 	private String resolveOperation(Exchange exchange) {
-		// 1. Operation can be driven by either (in order of preference):
-		// a. If the body is an ActionRequest the operation is set by the type
-		// of request.
-		// b. If the body is not an ActionRequest, the operation is set by the
-		// header if it exists.
-		// c. If neither the operation can not be derived from the body or
-		// header, the configuration is used.
-		// In the event we can't discover the operation from a, b or c we throw
-		// an error.
 		Object request = exchange.getIn().getBody();
 		
 
@@ -45,16 +36,6 @@ public class ElasticsearchHTTPProducer extends DefaultProducer {
 	}
 
 	public void process(Exchange exchange) throws Exception {
-		// 2. Index and type will be set by:
-		// a. If the incoming body is already an action request
-		// b. If the body is not an action request we will use headers if they
-		// are set.
-		// c. If the body is not an action request and the headers aren't set we
-		// will use the configuration.
-		// No error is thrown by the component in the event none of the above
-		// conditions are met. The java es client
-		// will throw.
-
 		Message message = exchange.getIn();
 		final String operation = resolveOperation(exchange);
 
@@ -116,14 +97,6 @@ public class ElasticsearchHTTPProducer extends DefaultProducer {
 							+ operation + "' is not supported");
 		}
 
-		// If we set params via the configuration on this exchange, remove them
-		// now. This preserves legacy behavior for this component and enables a
-		// use case where one message can be sent to multiple elasticsearch
-		// endpoints where the user is relying on the endpoint configuration
-		// (index/type) rather than header values. If we do not clear this out
-		// sending the same message (index request, for example) to multiple
-		// elasticsearch endpoints would have the effect overriding any
-		// subsequent endpoint index/type with the first endpoint index/type.
 		if (configIndexName) {
 			message.removeHeader(ElasticsearchConstants.PARAM_INDEX_NAME);
 		}
