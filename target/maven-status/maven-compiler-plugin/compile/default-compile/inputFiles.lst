@@ -1,7 +1,0 @@
-/Users/sarwar/dev/camel-elasticsearch-http/src/main/java/com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPProducer.java
-/Users/sarwar/dev/camel-elasticsearch-http/src/main/java/com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPConfiguration.java
-/Users/sarwar/dev/camel-elasticsearch-http/src/main/java/com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPClient.java
-/Users/sarwar/dev/camel-elasticsearch-http/src/main/java/com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPEndpoint.java
-/Users/sarwar/dev/camel-elasticsearch-http/src/main/java/com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPComponent.java
-/Users/sarwar/dev/camel-elasticsearch-http/src/main/java/com/sarwarbhuiyan/camel/component/elasticsearch/http/ESDocumentResponse.java
-/Users/sarwar/dev/camel-elasticsearch-http/src/main/java/com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchConstants.java

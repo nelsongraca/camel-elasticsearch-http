@@ -1,7 +1,0 @@
-com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPClient.class
-com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPConfiguration.class
-com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchConstants.class
-com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPComponent.class
-com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPProducer.class
-com/sarwarbhuiyan/camel/component/elasticsearch/http/ElasticsearchHTTPEndpoint.class
-com/sarwarbhuiyan/camel/component/elasticsearch/http/ESDocumentResponse.class
