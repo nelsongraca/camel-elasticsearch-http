@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -24,10 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
@@ -90,10 +87,11 @@ public class ElasticsearchHTTPClient {
 
 	public ElasticsearchHTTPClient() {
 		ClientConfig clientConfig = new ClientConfig();
-		clientConfig.property(ClientProperties.READ_TIMEOUT, 2000);
-		clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 500);
+		clientConfig.property(ClientProperties.READ_TIMEOUT, 5000);
+		clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 5000);
 		clientConfig.property(ClientProperties.REQUEST_ENTITY_PROCESSING,
 				RequestEntityProcessing.BUFFERED);
+		
 		PoolingHttpClientConnectionManager poolingConnectionManager = new PoolingHttpClientConnectionManager();
 
 		poolingConnectionManager.setMaxTotal(100);
@@ -102,10 +100,12 @@ public class ElasticsearchHTTPClient {
 		clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER,
 				poolingConnectionManager);
 		ApacheConnectorProvider connectorProvider = new ApacheConnectorProvider();
+	
 		clientConfig.connectorProvider(connectorProvider);
-
+		
 		this.client = ClientBuilder.newClient(clientConfig).register(
 				JacksonJsonProvider.class);
+
 	}
 
 	public String getHost() {
@@ -203,7 +203,6 @@ public class ElasticsearchHTTPClient {
 			List<String> documents) {
 		StringBuilder bodyBuilder = new StringBuilder();
 		for (String doc : documents) {
-			bodyBuilder = new StringBuilder();
 			bodyBuilder.append("{\"index\":{\"_index\":\"").append(indexName)
 			.append("\",").append("\"_type\":\"").append(indexType)
 			.append("\"}}\n");

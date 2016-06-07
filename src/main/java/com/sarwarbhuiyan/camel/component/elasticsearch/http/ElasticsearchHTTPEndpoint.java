@@ -65,8 +65,6 @@ public class ElasticsearchHTTPEndpoint extends DefaultEndpoint {
 	@SuppressWarnings("unchecked")
 	protected void doStart() throws Exception {
 		super.doStart();
-
-		LOG.info("Using HTTP Client ");
 		esHttpClient = new ElasticsearchHTTPClient();
 		esHttpClient.setHost(configuration.getIp());
 		esHttpClient.setPort(String.valueOf(configuration.getPort()));
@@ -154,13 +152,15 @@ public class ElasticsearchHTTPEndpoint extends DefaultEndpoint {
 		// if reindexing, we expect a map of objects to come back with the key being the id
 		if (!configuration.isPreserveIds()) {
 			List<Object> objects = message.getBody(List.class);
-
-			List<String> documents = new ArrayList<String>(objects.size());
-			for (Object obj : objects) {
-				documents.add((String) obj);
+			if(objects!=null) {
+				List<String> documents = new ArrayList<String>(objects.size());
+				for (Object obj : objects) {
+					documents.add((String) obj);
+				}
+				return esHttpClient.bulkIndex(getIndexName(message),
+						getIndexType(message), documents);
 			}
-			return esHttpClient.bulkIndex(getIndexName(message),
-					getIndexType(message), documents);
+
 		} else {
 			
 			Map<String, Object> objectsMap = message.getBody(Map.class);
@@ -172,6 +172,7 @@ public class ElasticsearchHTTPEndpoint extends DefaultEndpoint {
 			return esHttpClient.bulkReIndex(getIndexName(message),
 					getIndexType(message), documents);
 		}
+		return null;
 
 	}
 

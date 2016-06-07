@@ -16,7 +16,7 @@ public class BulkReindexStrategy implements AggregationStrategy {
 			
 	        Map<String,Object> map = null;
 	        if (oldExchange == null) {
-	            map = new HashMap<>();
+	            map = new HashMap<String,Object>();
 	            map.put(id,newBody);
 	            newExchange.getIn().setBody(map);
 	            return newExchange;
