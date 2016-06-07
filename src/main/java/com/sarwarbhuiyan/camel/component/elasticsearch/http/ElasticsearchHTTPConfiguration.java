@@ -13,7 +13,7 @@ public class ElasticsearchHTTPConfiguration {
     @UriPath @Metadata(required = "false")
     private String clusterName;
     
-    @UriParam(enums = "INDEX,UPDATE,BULK,BULK_INDEX,GET_BY_ID,MULTIGET,DELETE,EXISTS,SEARCH,MULTISEARCH")
+    @UriParam(enums = "INDEX,UPDATE,BULK,BULK_INDEX,GET_BY_ID,MULTIGET,DELETE,EXISTS,SEARCH,MULTISEARCH,SCAN_SCROLL")
     private String operation;
 
     @UriParam
@@ -36,7 +36,62 @@ public class ElasticsearchHTTPConfiguration {
     @UriParam(defaultValue = "DEFAULT")
     private String consistencyLevel = ElasticsearchConstants.DEFAULT_CONSISTENCY_LEVEL;
     
-    /**                                                                                                                                                                              
+    @UriParam
+    private int concurrentConsumers = 5;
+    
+    @UriParam
+    private int scrollSize = 1000;
+    
+    @UriParam
+    private String scrollPeriod = null;
+    
+    @UriParam
+    private String scanQuery = null;
+    
+    @UriParam
+    private boolean preserveIds = false;
+    
+    public boolean isPreserveIds() {
+		return preserveIds;
+	}
+
+	public void setPreserveIds(boolean resolveId) {
+		this.preserveIds = resolveId;
+	}
+
+	public String getScanQuery() {
+		return scanQuery;
+	}
+
+	public void setScanQuery(String scanQuery) {
+		this.scanQuery = scanQuery;
+	}
+
+	public String getScrollPeriod() {
+		return scrollPeriod;
+	}
+
+	public void setScrollPeriod(String scrollPeriod) {
+		this.scrollPeriod = scrollPeriod;
+	}
+
+	public void setScrollSize(int scrollSize) {
+		this.scrollSize = scrollSize;
+	}
+
+	public int getScrollSize() {
+		return scrollSize;
+	}
+
+	public int getConcurrentConsumers() {
+		return concurrentConsumers;
+	}
+
+	public void setConcurrentConsumers(int concurrentConsumers) {
+		this.concurrentConsumers = concurrentConsumers;
+	}
+
+	/**                                                                                                                                                                              
      * Name of cluster or use local for local mode                                                                                                                                   
      */
     public String getClusterName() {

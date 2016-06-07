@@ -42,18 +42,16 @@ public class ElasticsearchHTTPProducer extends DefaultProducer {
 		// Set the index/type headers on the exchange if necessary. This is used
 		// for type conversion.
 		boolean configIndexName = false;
-		String indexName = message.getHeader(
-				ElasticsearchConstants.PARAM_INDEX_NAME, String.class);
-		if (indexName == null) {
+		String indexName = getEndpoint().getConfig().getIndexName();
+		if (indexName != null) {
 			message.setHeader(ElasticsearchConstants.PARAM_INDEX_NAME,
 					getEndpoint().getConfig().getIndexName());
 			configIndexName = true;
 		}
 
 		boolean configIndexType = false;
-		String indexType = message.getHeader(
-				ElasticsearchConstants.PARAM_INDEX_TYPE, String.class);
-		if (indexType == null) {
+		String indexType = getEndpoint().getConfig().getIndexType();
+		if (indexType != null) {
 			message.setHeader(ElasticsearchConstants.PARAM_INDEX_TYPE,
 					getEndpoint().getConfig().getIndexType());
 			configIndexType = true;
