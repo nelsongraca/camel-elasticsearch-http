@@ -42,12 +42,40 @@ The objects passed to the endpoint can either be JSON strings or Map of Maps rep
 
 For the most part, this is in keeping with the operations on camel-elasticsearch but not supporting the classes/objects in the Java Elasticsearch Client API.
 
+Connection Pooling and Long-lived HTTP connections are used under the hood by virtue of using Apache HttpClient
+
+Examples:
+
+The following show pipeline builders that can be included in a Camel application:
+
+1. Reindex from existing Elasticseach to new Elasticsearch index/cluster
+
+```
+from("eshttp://elasticsearch?ip=localhost&port=3000&operation=SCAN_SCROLL&indexName=my-index&scrollSize=10")
+    		.aggregate(constant(true), new BulkReindexStrategy())
+    		.completionSize(1000)     // set bulk size here
+    		.forceCompletionOnStop()
+    		.completionTimeout(1000)  // set completion timeout here
+    		.to("eshttp://elasticsearch?ip=localhost&port=3000&operation=BULK_INDEX&indexName=my-index2&preserveIds=true");
+```
+
+2. Read from twitter and index into Elasticsearch
+```
+        from("twitter://streaming/sample?type=EVENT&consumerKey=<consumer-key>&consumerSecret=<consumer-secret>&accessToken=<access-token>&accessTokenSecret=<access-token-secret>&delay=1")
+        .to("jms:test.TwitterQueue");
+        
+        from("jms:test.TwitterQueue")
+        .marshal().json(JsonLibrary.Jackson)
+        .aggregate(constant(true), new BulkIndexStrategy())
+		.completionSize(1000)
+		.forceCompletionOnStop()
+        .to("eshttp://elasticsearch?ip=localhost&port=9300&operation=BULK_INDEX&indexName=twitter&indexType=tweet");
+```
+
 # Future Work
 
 * Load balancing across multiple data nodes
 * Sniffing of all data nodes from network via calls to the cluster
-* Connection Pooling
-* Long-lived HTTP connection
 
 
 
