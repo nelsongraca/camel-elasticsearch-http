@@ -32,6 +32,7 @@ Where operation name can take the values:
 * MULTISEARCH
 * EXISTS
 * UPDATE
+* SCAN_SCROLL (as a consumer endpoint. If this is used as a consumer endpoint and then used to reindex/bulk reindex using an output/producer endpoint, one can use the preserveIds=true parameter to preserve IDs from the source index)
 
 Other parameters supported are:
 
