@@ -11,14 +11,13 @@ import org.apache.camel.impl.DefaultMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ElasticsearchScanScrollTask implements Runnable {
 
 	private static final Logger LOG = LoggerFactory
 			.getLogger(ElasticsearchScanScrollTask.class);
-	
+
 	private final ElasticsearchHTTPEndpoint endpoint;
 
 	private final ElasticsearchHTTPConfiguration configuration;
@@ -26,7 +25,7 @@ public class ElasticsearchScanScrollTask implements Runnable {
 	private final Processor processor;
 
 	private final ElasticsearchHTTPConsumer consumer;
-	
+
 	private final ElasticsearchScanScrollIterator iterator;
 
 	public ElasticsearchScanScrollTask(
@@ -43,7 +42,7 @@ public class ElasticsearchScanScrollTask implements Runnable {
 
 	@Override
 	public void run() {
-		
+
 		while(iterator.hasNext()) {
 			List list = iterator.next();
 			final Message message = new DefaultMessage();
@@ -59,7 +58,7 @@ public class ElasticsearchScanScrollTask implements Runnable {
 						message.setHeader(ElasticsearchConstants.PARAM_INDEX_ID, id);
 						message.setHeader(ElasticsearchConstants.PARAM_INDEX_TYPE, type);
 						message.setHeader(ElasticsearchConstants.PARAM_INDEX_NAME, indexName);
-						
+
 						message.setBody(objectMapper.writeValueAsString(sourceMap));
 						Exchange exchange = new DefaultExchange(endpoint.getCamelContext(), endpoint.getExchangePattern());
 						exchange.setIn(message);
@@ -77,19 +76,22 @@ public class ElasticsearchScanScrollTask implements Runnable {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-				
+
 			}
 
-			
+
 		}
-		
+
 		try {
-			endpoint.shutdown();
+			LOG.info("!!!!!!  Will call shutdown now !!!!!!");
+			endpoint.getCamelContext().stop();
+//			endpoint.getCamelContext().stopRoute("fromRoute");
+//			endpoint.shutdown();
 		} catch (Exception e) {
 			LOG.error("Error shutting down endpoint", e);
 		}
-		
+
 	}
-	
+
 
 }
