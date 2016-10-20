@@ -164,8 +164,7 @@ public class ElasticsearchHTTPEndpoint extends DefaultEndpoint {
 		} else {
 			
 			Map<String, Object> objectsMap = message.getBody(Map.class);
-			Map<String, String> documents = new HashMap<String, String>(
-					objectsMap.size());
+			Map<String, String> documents = new HashMap<String, String>();
 			for (Map.Entry<String, Object> entry : objectsMap.entrySet()) {
 				documents.put(entry.getKey(), (String) entry.getValue());
 			}
