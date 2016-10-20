@@ -66,6 +66,7 @@ public class ElasticsearchHTTPConsumer extends DefaultConsumer {
 		super.doStop();
 		//TODO send end scan/scroll message to ElasticsearchScanScrollTasks and clear scrolls
 		
+		log.info("Finishing consumer task now");
 		//shutdown the executor
 		if (executor != null) {
 			if (endpoint != null && getEndpoint().getCamelContext() != null) {
@@ -75,6 +76,7 @@ public class ElasticsearchHTTPConsumer extends DefaultConsumer {
 				executor.shutdownNow();
 			}
 		}
+
 	}
 
 	@Override

@@ -83,10 +83,9 @@ public class ElasticsearchScanScrollTask implements Runnable {
 		}
 
 		try {
-			LOG.info("!!!!!!  Will call shutdown now !!!!!!");
-			endpoint.getCamelContext().stop();
-//			endpoint.getCamelContext().stopRoute("fromRoute");
-//			endpoint.shutdown();
+			Thread.sleep(5000);
+			consumer.stop();
+			endpoint.stop();
 		} catch (Exception e) {
 			LOG.error("Error shutting down endpoint", e);
 		}

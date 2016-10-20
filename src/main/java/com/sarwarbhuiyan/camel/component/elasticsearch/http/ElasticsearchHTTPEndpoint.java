@@ -73,8 +73,8 @@ public class ElasticsearchHTTPEndpoint extends DefaultEndpoint {
 
 	@Override
 	protected void doStop() throws Exception {
-
 		super.doStop();
+		getCamelContext().stop();
 	}
 
 	public ElasticsearchHTTPConfiguration getConfig() {
