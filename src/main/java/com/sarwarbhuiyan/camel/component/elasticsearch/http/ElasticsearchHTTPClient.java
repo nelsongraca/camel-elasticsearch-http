@@ -70,11 +70,10 @@ public class ElasticsearchHTTPClient {
 
 	private static final String MGET_API_PATH = "_mget";
 
-	private static final String[] MSEARCH_HEADERS_TO_CHECK = new String[] {
-			"index", "type", "search_type", "preference", "routing" };
+	private static final String[] MSEARCH_HEADERS_TO_CHECK = new String[] { "index", "type", "search_type",
+			"preference", "routing" };
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(ElasticsearchHTTPClient.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchHTTPClient.class);
 
 	private Client client = null;
 	private String host = "localhost";
@@ -82,29 +81,29 @@ public class ElasticsearchHTTPClient {
 	private Boolean secure = false;
 	private WebTarget rootTarget = null;
 	private WebTarget bulkTarget = null;
-	
+
 	private ObjectMapper objectMapper = new ObjectMapper();
 
+	//private RestClient restClient = null;
+
 	public ElasticsearchHTTPClient() {
+
 		ClientConfig clientConfig = new ClientConfig();
-		clientConfig.property(ClientProperties.READ_TIMEOUT, 5000);
-		clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 5000);
-		clientConfig.property(ClientProperties.REQUEST_ENTITY_PROCESSING,
-				RequestEntityProcessing.BUFFERED);
-		
+		clientConfig.property(ClientProperties.READ_TIMEOUT, 30000);
+		clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 30000);
+		clientConfig.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED);
+
 		PoolingHttpClientConnectionManager poolingConnectionManager = new PoolingHttpClientConnectionManager();
 
 		poolingConnectionManager.setMaxTotal(100);
 		poolingConnectionManager.setDefaultMaxPerRoute(10);
 
-		clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER,
-				poolingConnectionManager);
+		clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, poolingConnectionManager);
 		ApacheConnectorProvider connectorProvider = new ApacheConnectorProvider();
-	
+
 		clientConfig.connectorProvider(connectorProvider);
-		
-		this.client = ClientBuilder.newClient(clientConfig).register(
-				JacksonJsonProvider.class);
+
+		this.client = ClientBuilder.newClient(clientConfig).register(JacksonJsonProvider.class);
 
 	}
 
@@ -143,6 +142,13 @@ public class ElasticsearchHTTPClient {
 		return rootTarget;
 	}
 
+//	private RestClient getRestClient() {
+//		if (restClient == null) {
+//			restClient = RestClient.builder(new HttpHost(this.host, Integer.parseInt(this.port), "http")).build();
+//		}
+//		return restClient;
+//	}
+
 	/**
 	 * Index API for when parent and consistency are not specified
 	 * 
@@ -166,16 +172,14 @@ public class ElasticsearchHTTPClient {
 	 * @param consistency
 	 * @return
 	 */
-	public String index(String indexName, String type, String body,
-			String parent, String consistency) {
+	public String index(String indexName, String type, String body, String parent, String consistency) {
 		WebTarget target = getRootTarget().path(indexName).path(type);
 		if (parent != null)
 			target = target.queryParam(PARENT_REQUEST_PARAM, parent);
 		if (consistency != null)
 			target = target.queryParam(CONSISTENCY_REQUEST_PARAM, consistency);
 
-		ESDocumentResponse response = target.request().post(Entity.json(body),
-				ESDocumentResponse.class);
+		ESDocumentResponse response = target.request().post(Entity.json(body), ESDocumentResponse.class);
 		// TODO need to rethink this approach of responding with just the ID
 
 		return response.getId();
@@ -190,7 +194,7 @@ public class ElasticsearchHTTPClient {
 		Response response = target.request().head();
 		return (response.getStatus() == 200);
 	}
-	
+
 	/**
 	 * Bulk index API using the bulk api format
 	 * 
@@ -199,54 +203,58 @@ public class ElasticsearchHTTPClient {
 	 * @param documents
 	 * @return
 	 */
-	public List<String> bulkIndex(String indexName, String indexType,
-			List<String> documents) {
+	public List<String> bulkIndex(String indexName, String indexType, List<String> documents) {
 		StringBuilder bodyBuilder = new StringBuilder();
 		for (String doc : documents) {
-			bodyBuilder.append("{\"index\":{\"_index\":\"").append(indexName)
-			.append("\",").append("\"_type\":\"").append(indexType)
-			.append("\"}}\n");
-				
-			
+			bodyBuilder.append("{\"index\":{\"_index\":\"").append(indexName).append("\",").append("\"_type\":\"")
+					.append(indexType).append("\"}}\n");
+
 			String strippedDoc = stripSpecialChars(doc);
 			bodyBuilder.append(strippedDoc).append(END_OF_LINE);
 		}
-		WebTarget target = getRootTarget().path(indexName).path(indexType)
-				.path("_bulk");
-		// WebTarget target = getBulkTarget();
-		// LOG.info("Bulk Indexing \n" + bodyBuilder.toString());
-		Response response = target.request().post(
-				Entity.text(bodyBuilder.toString()));
+		
+		//Legacy code
+		WebTarget target = getRootTarget().path(indexName).path(indexType).path("_bulk");
+		Response response = target.request().post(Entity.text(bodyBuilder.toString()));
 		JsonNode responseNode = response.readEntity(JsonNode.class);
 		JsonNode itemsNode = responseNode.get(ITEMS_ATTR);
 		List<String> ids = itemsNode.findValuesAsText(ID_ATTR);
-		// TODO this returning of List<String> doesn't actually tell you which
-		// ones failed
-
 		return ids;
+		
+		//RestClient code
+//		StringBuilder pathBuilder = new StringBuilder();
+//		pathBuilder.append("/").append(indexName).append("/").append(indexType).append("/_bulk");
+//		
+//		HttpEntity entity = new NStringEntity(
+//		        bodyBuilder.toString(), ContentType.APPLICATION_JSON);
+//		try {
+//			org.elasticsearch.client.Response response = getRestClient().performRequest("POST", pathBuilder.toString(), Collections.<String, String>emptyMap(), entity);
+//			JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
+//			JsonNode itemsNode = responseNode.get(ITEMS_ATTR);
+//			List<String> ids = itemsNode.findValuesAsText(ID_ATTR);
+//			return ids;
+//		} catch (IOException e) {
+//			LOG.error("Error performing bulk request", e);
+//		}
+//		return null;
+
 	}
-	
-	public List<String> bulkReIndex(String indexName, String indexType,
-			Map<String,String> documents) {
+
+	public List<String> bulkReIndex(String indexName, String indexType, Map<String, String> documents) {
 		StringBuilder bodyBuilder = new StringBuilder();
 		for (String docKey : documents.keySet()) {
-				String doc = (String)documents.get(docKey);
-				// extract the id from the document
-				bodyBuilder.append("{\"index\":{\"_index\":\"").append(indexName)
-					.append("\",").append("\"_type\":\"").append(indexType)
-					.append("\",").append("\"_id\":\"").append(docKey)
-					.append("\"}}\n");
-			
+			String doc = (String) documents.get(docKey);
+			// extract the id from the document
+			bodyBuilder.append("{\"index\":{\"_index\":\"").append(indexName).append("\",").append("\"_type\":\"")
+					.append(indexType).append("\",").append("\"_id\":\"").append(docKey).append("\"}}\n");
 
 			String strippedDoc = stripSpecialChars(doc);
 			bodyBuilder.append(strippedDoc).append(END_OF_LINE);
 		}
-		WebTarget target = getRootTarget().path(indexName).path(indexType)
-				.path("_bulk");
+		WebTarget target = getRootTarget().path(indexName).path(indexType).path("_bulk");
 		// WebTarget target = getBulkTarget();
 		// LOG.info("Bulk Indexing \n" + bodyBuilder.toString());
-		Response response = target.request().post(
-				Entity.text(bodyBuilder.toString()));
+		Response response = target.request().post(Entity.text(bodyBuilder.toString()));
 		JsonNode responseNode = response.readEntity(JsonNode.class);
 		JsonNode itemsNode = responseNode.get(ITEMS_ATTR);
 		List<String> ids = itemsNode.findValuesAsText(ID_ATTR);
@@ -257,8 +265,7 @@ public class ElasticsearchHTTPClient {
 	}
 
 	private String stripSpecialChars(String doc) {
-		return doc.trim().replaceAll(CARRIAGE_RETURN, "")
-			.replaceAll(END_OF_LINE, "").replaceAll(TAB_CHAR, "");
+		return doc.trim().replaceAll(CARRIAGE_RETURN, "").replaceAll(END_OF_LINE, "").replaceAll(TAB_CHAR, "");
 	}
 
 	private WebTarget getBulkTarget() {
@@ -277,8 +284,7 @@ public class ElasticsearchHTTPClient {
 	 * @return
 	 */
 	public String getById(String indexName, String indexType, String docId) {
-		WebTarget target = getRootTarget().path(indexName).path(indexType)
-				.path(docId);
+		WebTarget target = getRootTarget().path(indexName).path(indexType).path(docId);
 
 		Response response = target.request().get();
 		return response.readEntity(String.class);
@@ -293,8 +299,7 @@ public class ElasticsearchHTTPClient {
 	 * @return
 	 */
 	public String delete(String indexName, String indexType, String docId) {
-		WebTarget target = getRootTarget().path(indexName).path(indexType)
-				.path(docId);
+		WebTarget target = getRootTarget().path(indexName).path(indexType).path(docId);
 
 		Response response = target.request().delete();
 		return response.readEntity(String.class);
@@ -309,10 +314,8 @@ public class ElasticsearchHTTPClient {
 	 * @param body
 	 * @return
 	 */
-	public Object update(String indexName, String indexType, String docId,
-			Map body) {
-		WebTarget target = getRootTarget().path(indexName).path(indexType)
-				.path(docId).path(UPDATE_API_PATH);
+	public Object update(String indexName, String indexType, String docId, Map body) {
+		WebTarget target = getRootTarget().path(indexName).path(indexType).path(docId).path(UPDATE_API_PATH);
 		// if(parent!=null)
 		// target = target.queryParam("parent", parent);
 		// if(consistency!=null)
@@ -321,11 +324,9 @@ public class ElasticsearchHTTPClient {
 		StringBuilder bodyStringBuilder = new StringBuilder();
 
 		try {
-			bodyStringBuilder.append("{\"doc\":")
-					.append(new ObjectMapper().writeValueAsString(body))
+			bodyStringBuilder.append("{\"doc\":").append(new ObjectMapper().writeValueAsString(body))
 					.append(JSON_OBJECT_END);
-			Response response = target.request().post(
-					Entity.json(bodyStringBuilder.toString()));
+			Response response = target.request().post(Entity.json(bodyStringBuilder.toString()));
 			if (response.getStatus() == 200)
 				return docId;
 
@@ -365,15 +366,13 @@ public class ElasticsearchHTTPClient {
 		try {
 			bodyAsString = objectMapper.writeValueAsString(wrapper);
 
-			Response response = target.request()
-					.post(Entity.json(bodyAsString));
+			Response response = target.request().post(Entity.json(bodyAsString));
 
 			JsonNode responseJsonNode = response.readEntity(JsonNode.class);
 			if (responseJsonNode != null) {
 
 				List<String> result = new ArrayList<String>();
-				Iterator<JsonNode> jsonNodeIterator = responseJsonNode.get(
-						"docs").iterator();
+				Iterator<JsonNode> jsonNodeIterator = responseJsonNode.get("docs").iterator();
 				while (jsonNodeIterator.hasNext()) {
 					JsonNode jsonNode = jsonNodeIterator.next();
 					result.add(jsonNode.toString());
@@ -407,8 +406,7 @@ public class ElasticsearchHTTPClient {
 		}
 		target = target.path("_search");
 		try {
-			String searchBody = new ObjectMapper()
-					.writeValueAsString(queryObject);
+			String searchBody = new ObjectMapper().writeValueAsString(queryObject);
 			Response response = target.request().post(Entity.json(searchBody));
 			return response.readEntity(Map.class);
 
@@ -429,8 +427,7 @@ public class ElasticsearchHTTPClient {
 	 * @param queryObject
 	 * @return
 	 */
-	public Object multisearch(String indexName, String indexType,
-			List queryObjects) {
+	public Object multisearch(String indexName, String indexType, List queryObjects) {
 		WebTarget target = getRootTarget();
 		if (indexName != null) {
 			target = target.path(indexName);
@@ -457,11 +454,8 @@ public class ElasticsearchHTTPClient {
 					if (commaRequired) {
 						bodyBuilder.append(JSON_OBJECT_COMMA);
 					}
-					bodyBuilder.append(ESCAPED_DOUBLE_QUOTE).append(header)
-							.append(ESCAPED_DOUBLE_QUOTE).append(QUOTE)
-							.append(ESCAPED_DOUBLE_QUOTE)
-							.append(queryObjMap.get(header))
-							.append(ESCAPED_DOUBLE_QUOTE);
+					bodyBuilder.append(ESCAPED_DOUBLE_QUOTE).append(header).append(ESCAPED_DOUBLE_QUOTE).append(QUOTE)
+							.append(ESCAPED_DOUBLE_QUOTE).append(queryObjMap.get(header)).append(ESCAPED_DOUBLE_QUOTE);
 
 					commaRequired = true;
 				}
@@ -481,8 +475,7 @@ public class ElasticsearchHTTPClient {
 
 		}
 
-		Response response = target.request().post(
-				Entity.json(bodyBuilder.toString()));
+		Response response = target.request().post(Entity.json(bodyBuilder.toString()));
 		Map responseMap = response.readEntity(Map.class);
 		if (responseMap.containsKey("responses")) {
 			return responseMap.get("responses");
@@ -491,8 +484,7 @@ public class ElasticsearchHTTPClient {
 		return null;
 	}
 
-	public Map scan(String indexName, String indexType, String scanQuery,
-			String scrollPeriod, int scrollSize) {
+	public Map scan(String indexName, String indexType, String scanQuery, String scrollPeriod, int scrollSize) {
 		WebTarget target = getRootTarget();
 		if (indexName != null) {
 			target = target.path(indexName);
@@ -511,8 +503,7 @@ public class ElasticsearchHTTPClient {
 
 		try {
 			if (scanQuery != null) {
-				HashMap<String, Object> scanQueryObject = objectMapper
-						.readValue(scanQuery, typeRef);
+				HashMap<String, Object> scanQueryObject = objectMapper.readValue(scanQuery, typeRef);
 				queryObject.put("query", scanQueryObject);
 				ArrayList<String> sortList = new ArrayList<String>();
 				sortList.add("_doc");
@@ -532,33 +523,35 @@ public class ElasticsearchHTTPClient {
 	}
 
 	public Map scroll(String scrollPeriod, String scrollId) {
-		WebTarget target = getRootTarget();		
-		//USING 1.0 API here to be able to run across both 1.x and 2.x
+		WebTarget target = getRootTarget();
+		// USING 1.0 API here to be able to run across both 1.x and 2.x
 		target = target.path("_search").path("scroll").queryParam("scroll", scrollPeriod);
 
-//		Commenting out API for 2.x for now
-//		Map<String, Object> queryObject = new HashMap<String, Object>();
-//		queryObject.put("scroll", scrollPeriod);
-//		queryObject.put("scroll_id", scrollId);
-		
+		// Commenting out API for 2.x for now
+		// Map<String, Object> queryObject = new HashMap<String, Object>();
+		// queryObject.put("scroll", scrollPeriod);
+		// queryObject.put("scroll_id", scrollId);
+
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
-			//use old deprecated API for the time being to be able to accomodate both versions
+			// use old deprecated API for the time being to be able to
+			// accomodate both versions
 			String searchBody = scrollId;
-			//new API
-			//String searchBody = objectMapper.writeValueAsString(queryObject); 
-			//			Response response = target.request().post(Entity.json(searchBody));
+			// new API
+			// String searchBody = objectMapper.writeValueAsString(queryObject);
+			// Response response =
+			// target.request().post(Entity.json(searchBody));
 			Response response = target.request().post(Entity.text(searchBody));
-			
+
 			return response.readEntity(Map.class);
 
-		} 
-//		catch (JsonProcessingException e) {
-//			throw new RuntimeException("Could not process query body map", e);
-//		} 
-//		catch (IOException e) {
-//			throw new RuntimeException("Could not read scan query", e);
-//		}
+		}
+		// catch (JsonProcessingException e) {
+		// throw new RuntimeException("Could not process query body map", e);
+		// }
+		// catch (IOException e) {
+		// throw new RuntimeException("Could not read scan query", e);
+		// }
 		catch (Throwable t) {
 			throw new RuntimeException("Could not read scan query", t);
 		}
@@ -567,16 +560,14 @@ public class ElasticsearchHTTPClient {
 	public String indexWithId(String indexName, String indexType, String id, String body) {
 		WebTarget target = getRootTarget().path(indexName).path(indexType);
 		target = target.path(id);
-			
-		ESDocumentResponse response = target.request().put(Entity.json(body),
-					ESDocumentResponse.class);
-			
+
+		ESDocumentResponse response = target.request().put(Entity.json(body), ESDocumentResponse.class);
+
 		return response.getId();
-		
+
 	}
 
-	public List<String> bulkIndexWithId(String indexName, String indexType,
-			List<String> documents) {
+	public List<String> bulkIndexWithId(String indexName, String indexType, List<String> documents) {
 		// TODO Auto-generated method stub
 		return null;
 	}

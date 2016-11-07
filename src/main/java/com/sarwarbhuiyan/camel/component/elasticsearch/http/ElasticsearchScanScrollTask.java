@@ -40,7 +40,7 @@ public class ElasticsearchScanScrollTask implements Runnable {
 		this.iterator = this.endpoint.scanScroll();
 	}
 
-	@Override
+	
 	public void run() {
 
 		while(iterator.hasNext()) {
@@ -83,9 +83,16 @@ public class ElasticsearchScanScrollTask implements Runnable {
 		}
 
 		try {
-			Thread.sleep(5000);
-			consumer.stop();
-			endpoint.stop();
+			//Thread.sleep(5000);
+			
+			//Send custom COMPLETED message 
+			LOG.info("Sending DONE message now");
+			Message completedMessage = new DefaultMessage();
+			completedMessage.setBody("DONE");
+			Exchange exchange = new DefaultExchange(endpoint.getCamelContext(), endpoint.getExchangePattern());
+			exchange.setIn(completedMessage);
+			this.processor.process(exchange);
+			
 		} catch (Exception e) {
 			LOG.error("Error shutting down endpoint", e);
 		}

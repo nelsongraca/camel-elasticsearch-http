@@ -41,7 +41,7 @@ public class ElasticsearchScanScrollIterator implements
 
 	}
 
-	@Override
+	
 	public boolean hasNext() {
 		if (this.scrollId == null) {
 			currentResults = this.client.scan(index, indexType, scanQuery,
@@ -61,7 +61,7 @@ public class ElasticsearchScanScrollIterator implements
 		return false;
 	}
 
-	@Override
+	
 	public List next() {
 		return currentResultsHits;
 	}

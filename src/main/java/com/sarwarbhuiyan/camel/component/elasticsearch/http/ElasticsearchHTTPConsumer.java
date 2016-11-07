@@ -63,7 +63,6 @@ public class ElasticsearchHTTPConsumer extends DefaultConsumer {
 
 	@Override
 	protected void doStop() throws Exception {
-		super.doStop();
 		//TODO send end scan/scroll message to ElasticsearchScanScrollTasks and clear scrolls
 		
 		log.info("Finishing consumer task now");
@@ -76,7 +75,8 @@ public class ElasticsearchHTTPConsumer extends DefaultConsumer {
 				executor.shutdownNow();
 			}
 		}
-
+		
+		super.doStop();
 	}
 
 	@Override
